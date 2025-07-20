@@ -1,8 +1,8 @@
-# Ignore all files
 config/*
 !config/user_config_file_TEMPLATE.json
 explainer/*
 !explainer/SVM_explainer.pdf
+data/MNIST/*
 
 
 
