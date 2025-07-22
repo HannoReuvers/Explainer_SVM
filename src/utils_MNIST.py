@@ -3,12 +3,13 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 
-def prepare_MNIST_data_sets(MNIST_data_folder, max_pixel_value=255, display_details=False):
+def prepare_MNIST_data_sets(MNIST_data_folder, max_pixel_value=255, vectorize_features=True, display_details=False):
     """
     Preprocess the MNIST data into a train, validation and test data set.
 
     :param MNIST_data_folder: Local folder containing the MNIST data
     :param max_pixel_value: The maximum pixel value (used to standardize the regressor matrix).
+    :param vectorize_features: Create vector stack of all input pixels
     :param display_details: Print details
     :return X_train: Regression matrix for training
     :return X_valid: Regression matrix for validation
@@ -36,13 +37,18 @@ def prepare_MNIST_data_sets(MNIST_data_folder, max_pixel_value=255, display_deta
         print(f"Train: {train_sample_size}")
         print(f"Test: {test_sample_size}")
 
-
     # Split train data (stratify by image digit to preserve distribution among classes)
-    X_full = train_images.reshape(train_sample_size, image_width*image_height)
+    if vectorize_features:
+        X_full = train_images.reshape(train_sample_size, image_width*image_height)
+        X_test = test_images.reshape(test_sample_size, image_width*image_height)
+    else:
+        X_full = train_images
+        X_test = test_images
+    
+    # Split train data (stratify by image digit to preserve distribution among classes)
     X_train, X_valid, y_train_digits, y_valid_digits = train_test_split(X_full, train_labels, test_size = 1/6, random_state=42, stratify=train_labels)
 
-    # Test data only requires reshape
-    X_test = test_images.reshape(test_sample_size, image_width*image_height)
+    # Outputs for test set
     y_test_digits = test_labels
 
     return X_train, X_valid, X_test, y_train_digits, y_valid_digits, y_test_digits

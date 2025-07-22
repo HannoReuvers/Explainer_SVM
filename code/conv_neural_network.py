@@ -65,7 +65,7 @@ def create_MNIST_data_loaders(BATCH_SIZE: int):
     import utils_MNIST
 
     # Read data from folder
-    X_train, X_valid, X_test, y_train_digits, y_valid_digits, y_test_digits = utils_MNIST.prepare_MNIST_data_sets("../data/MNIST/", vectorize_features=True)
+    X_train, X_valid, X_test, y_train_digits, y_valid_digits, y_test_digits = utils_MNIST.prepare_MNIST_data_sets("../data/MNIST/", vectorize_features=False)
 
     # Create a dataset and loader for TRAINING
     train_x = torch.Tensor(X_train).float()
@@ -93,27 +93,43 @@ def design_neural_network(DEBUG: bool):
     # Layer specification (input is 28x28=784, hidden layer with 800 units, output maps to 10 digits)
     layer_units = [784, 800, 10]
 
+    conv2_out_channel = 16
+
     # Define fully connected neural network
-    class MNIST_fc(nn.Module):
+    class MNIST_conv_network(nn.Module):
         def __init__(self):
-            super(MNIST_fc, self).__init__()
-            self.fc1 = nn.Linear(layer_units[0], layer_units[1])
-            self.fc2 = nn.Linear(layer_units[1], layer_units[2])
+            super(MNIST_conv_network, self).__init__()
+            self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, stride=1, padding=1)
+            self.max1 = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
+            self.conv2 = nn.Conv2d(in_channels=32, out_channels=conv2_out_channel, kernel_size=3, stride=1, padding=1)
+            self.max2 = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
+            self.fc1 = nn.Linear(in_features = conv2_out_channel*7*7, out_features= 100)
+            self.fc2 = nn.Linear(in_features= 100, out_features=10)
         
         def forward(self, x):
+            # Pass input through the two blocks of convulational+average layers
+            x = torch.relu(self.max1(self.conv1(x)))
+            x = torch.relu(self.max2(self.conv2(x)))
+
+            # Flatten convolution output to serve as fully connected input
+            #print(x.shape)
+            x = x.view(-1, conv2_out_channel * 7 * 7)
+
+            # Pass result to fully connected layers
             x = torch.relu(self.fc1(x))
             x = torch.relu(self.fc2(x))
+
             return x
     
     # Instantiate neural network
-    fullyconnected_nn = MNIST_fc()
+    conv_network = MNIST_conv_network()
     if DEBUG:
-        total_params = [torch.numel(paraset) for paraset in fullyconnected_nn.parameters()]
+        total_params = [torch.numel(paraset) for paraset in conv_network.parameters()]
         print("\nNEURAL NETWORK LAYOUT")
         print(f"Size of parameter sets: {total_params}")
         print(f"Total number of parameters: {sum(total_params)}")
 
-    return fullyconnected_nn
+    return conv_network
 
 def train_model(model, data_loader, optimizer):
 
@@ -128,6 +144,7 @@ def train_model(model, data_loader, optimizer):
     train_loss = 0
     for batch, tensor in enumerate(data_loader):
         data, target = tensor
+        data = data[:, None, :, :]
         optimizer.zero_grad()
         prediction = model(data)
         loss = loss_criteria(prediction, target)
@@ -154,6 +171,7 @@ def evaluate_model(model, data_loader):
     with torch.no_grad():
         for batch, tensor in enumerate(data_loader):
             data, target = tensor
+            data = data[:, None, :, :]
             prediction = model(data)
             loss = loss_criteria(prediction, target)
             total_loss += loss.item()
