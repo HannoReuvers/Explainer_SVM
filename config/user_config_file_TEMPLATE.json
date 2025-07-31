@@ -1,4 +1,4 @@
 {
- "utils_location": "Enter absolute path of folder containing utils.py file",
- "MNIST_data_location": "Enter absolute path of MNIST data folder"
+ "utils_location": "<Enter absolute path of folder containing utils.py file>",
+ "MNIST_data_location": "<Enter absolute path of MNIST data folder>"
 }
