@@ -3,6 +3,7 @@ config/*
 explainer/*
 !explainer/SVM_explainer.pdf
 data/MNIST/*
+.DS_Store
 
 
 
