@@ -28,9 +28,6 @@ def main(args):
     # Data loaders for train, validation and test data
     train_loader, valid_loader, test_loader = create_MNIST_data_loaders(args.batch_size)
 
-    # Get the neural network specification
-    neural_network_specification = design_neural_network(args.DEBUG)
-
     # Train the neural network
     loss_criteria = nn.CrossEntropyLoss()
     neural_network_specification = design_neural_network(args.DEBUG)
@@ -130,6 +127,10 @@ def train_model(model, data_loader, optimizer):
         data, target = tensor
         optimizer.zero_grad()
         prediction = model(data)
+        print("Prediction")
+        print(prediction.shape)
+        print("Target")
+        print(target.shape)
         loss = loss_criteria(prediction, target)
         train_loss += loss.item()
 
